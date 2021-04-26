@@ -53,35 +53,40 @@ class DecisionTree(object):
     def build_tree(self, X, y):
         """构建决策树"""
 
-        # 1. 剩余实例属于同一类，置T为单节点树
+        # 1. 剩余实例属于同一类，置T为单节点树，将他们的标签作为类别标签
         if np.unique(y).shape[0] == 1:
             return TreeNode(node_val=y[0])
 
-        # 2. 不能继续划分，置T为单节点树，将最多的类该节点的类
+        # 2. 不能继续划分，置T为单节点树，将最多的类别标签该节点的类别标签
         if X.shape[1] == 1:
             node_val = self.vote_label(y)
             return TreeNode(node_val=node_val)
 
-        # 这里存疑
+        # 3. 否则，计算各特征的信息增益，记录最大的信息增益和对应的特征
         n_feature = X.shape[1]
+        # 将最大增益（比）初始化为负无穷
         max_gain = -np.inf
         max_fea_idx = 0
         for i in range(n_feature):
+            # 传入第i维特征的值，计算信息增益（比）
             if self.etype == "gain":
                 gain = self.calc_gain(X[:, i], y)
             else:
                 gain = self.calc_gain_ratio(X[:, i], y)
+            # 记录最大增益值和对应的维度i
             if gain > max_gain:
                 max_gain = gain
                 max_fea_idx = i
 
-        # 3.信息增益(比)小于epsilon，置T为单节点树
+        # 4.信息增益(比)小于epsilon，置T为单节点树
         if max_gain <= self.epsilon:
             node_val = self.vote_label(y)
             return TreeNode(node_val=node_val)
 
+        # 5.否则，对特征的每一个取值构建子结点，返回结点和子结点形成的树
         feature_name = self.feature_name[max_fea_idx]
         child_tree = dict()
+        # 构建一维子树，删除一个特征
         for fea_val in np.unique(X[:, max_fea_idx]):
             child_X = X[X[:, max_fea_idx] == fea_val]
             child_y = y[X[:, max_fea_idx] == fea_val]
