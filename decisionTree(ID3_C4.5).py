@@ -1,4 +1,5 @@
 import argparse
+
 import numpy as np
 from sklearn.datasets import load_iris
 from sklearn.model_selection import train_test_split
@@ -42,12 +43,15 @@ class DecisionTree(object):
         if tree.node_val is not None:
             return tree.node_val
 
+        # 遍历特征所有的取值，
         fea_idx = tree.feature_idx
         for fea_val, child_node in tree.child.items():
             if x[fea_idx] == fea_val:
                 if child_node.node_val is not None:
                     return child_node.node_val
                 else:
+                    if tree != self.root:
+                        print(fea_val)
                     return self.predict_help(x, child_node)
 
     def build_tree(self, X, y):
@@ -83,10 +87,11 @@ class DecisionTree(object):
             node_val = self.vote_label(y)
             return TreeNode(node_val=node_val)
 
-        # 5.否则，对特征的每一个取值构建子结点，返回结点和子结点形成的树
+        # 5.否则，对特征的每一个取值构建子结点，返回结点和子结点形成的树T
         feature_name = self.feature_name[max_fea_idx]
         child_tree = dict()
         # 构建一维子树，删除一个特征
+        # 作递归，直到所有的树枝都达到叶结点
         for fea_val in np.unique(X[:, max_fea_idx]):
             child_X = X[X[:, max_fea_idx] == fea_val]
             child_y = y[X[:, max_fea_idx] == fea_val]
@@ -147,8 +152,17 @@ def main():
         if y_pred == ytrain[i]:
             n_right += 1
         else:
+            print(xtrain[i], ytrain[i])
             logger.info(f"这个样本点所得到的预测类别是{y_pred}，但真实类别是{ytrain[i]}")
     logger.info(f"模型预测的准确率是{n_right*100/n_test}%")
+    print('complete')
+    """
+    bug描述：有一定几率会出现概率不为100%的情况
+    但是在这种情况下显示的y预测值显示的是none
+    Debug时查看model--root--child--...找到相应的节点，却发现node_val有值
+    于是我怀疑是predict函数的问题，但是没能查出错误
+    """
+
 
 if __name__ == '__main__':
     main()
